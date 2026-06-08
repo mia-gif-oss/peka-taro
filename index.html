@@ -65,7 +65,7 @@
   }
   .nav-btn.active { color: var(--gold); }
   .nav-btn svg { width: 22px; height: 22px; }
-  .nav-btn .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
+  .nav-btn .nav-label { font-size: 9px; font-weight: 600; letter-spacing: 0.3px; }
 
   /* Cards */
   .card {
@@ -169,6 +169,83 @@
   .tag-set { display: inline-block; background: #2a2000; border: 1px solid var(--gold); color: var(--gold); border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700; margin-right: 4px; }
 
   .input-hint { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+  /* やめ時判定 */
+  .quit-counter-btn {
+    width: 100%; padding: 20px;
+    background: var(--bg3); border: 2px solid var(--border);
+    border-radius: 14px; color: var(--text);
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+  .quit-counter-btn:active { background: #3a3000; border-color: var(--gold); }
+  .quit-counter-num { font-size: 52px; font-weight: 700; color: var(--gold); line-height: 1; }
+  .quit-counter-label { font-size: 12px; color: var(--text2); }
+  .quit-counter-reset {
+    position: absolute; top: 8px; right: 10px;
+    background: none; border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text2); font-size: 11px;
+    padding: 2px 8px; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .quit-yn-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+  .quit-yn-item:last-child { border-bottom: none; }
+  .quit-yn-q { font-size: 13px; color: var(--text); flex: 1; line-height: 1.4; }
+  .quit-yn-btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .quit-yn-btn {
+    padding: 7px 14px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--bg3); color: var(--text2);
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s;
+  }
+  .quit-yn-btn.yes.selected { background: #2d1a1a; border-color: var(--red); color: var(--red); }
+  .quit-yn-btn.no.selected { background: #1a2d1a; border-color: var(--green); color: var(--green); }
+
+  /* 判定結果 */
+  .quit-result-card {
+    border-radius: 14px; padding: 18px; margin-bottom: 12px;
+    text-align: center;
+  }
+  .quit-result-card.level-0 { background: linear-gradient(135deg, #1a2a1a, #1e2d1e); border: 2px solid var(--green); }
+  .quit-result-card.level-1 { background: linear-gradient(135deg, #2a2a1a, #2d2d1e); border: 2px solid #e0c020; }
+  .quit-result-card.level-2 { background: linear-gradient(135deg, #2a1a0a, #2d2010); border: 2px solid var(--orange); }
+  .quit-result-card.level-3 { background: linear-gradient(135deg, #2a1a1a, #2d1e1e); border: 2px solid var(--red); }
+  .quit-char-icon { font-size: 56px; line-height: 1; margin-bottom: 6px; }
+  .quit-char-name { font-size: 14px; font-weight: 700; color: var(--text2); margin-bottom: 12px; }
+  .quit-level-badge {
+    display: inline-block; padding: 4px 16px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; margin-bottom: 14px;
+  }
+  .level-0 .quit-level-badge { background: rgba(76,175,80,0.2); color: var(--green); }
+  .level-1 .quit-level-badge { background: rgba(224,192,32,0.2); color: #e0c020; }
+  .level-2 .quit-level-badge { background: rgba(224,123,42,0.2); color: var(--orange); }
+  .level-3 .quit-level-badge { background: rgba(244,67,54,0.2); color: var(--red); }
+  .quit-speech-bubble {
+    background: var(--bg2); border-radius: 12px; padding: 14px 16px;
+    font-size: 14px; line-height: 1.7; color: var(--text);
+    position: relative; margin-top: 4px; text-align: left;
+    border: 1px solid var(--border);
+  }
+  .quit-speech-bubble::before {
+    content: ''; position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    border: 5px solid transparent; border-bottom-color: var(--border);
+  }
+  .quit-speech-bubble::after {
+    content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    border: 5px solid transparent; border-bottom-color: var(--bg2);
+  }
+  .quit-summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .quit-summary-item { background: var(--bg3); border-radius: 8px; padding: 8px; text-align: center; }
+  .quit-summary-item .qs-label { font-size: 10px; color: var(--text2); margin-bottom: 3px; }
+  .quit-summary-item .qs-value { font-size: 15px; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -270,6 +347,89 @@
     </div>
   </div>
 
+  <!-- タブ4: やめ時判定 -->
+  <div class="tab-pane" id="tab-quit">
+    <div class="card">
+      <div class="card-title">今日の収支情報</div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>今日の予算（円）</label>
+          <input type="number" id="q-budget" placeholder="例: 10000" min="0" inputmode="numeric">
+        </div>
+        <div class="form-row">
+          <label>現在の投資額（円）</label>
+          <input type="number" id="q-invest" placeholder="例: 8000" min="0" inputmode="numeric">
+        </div>
+        <div class="form-row">
+          <label>現在の回収額（円）</label>
+          <input type="number" id="q-recover" placeholder="例: 5000" min="0" inputmode="numeric">
+        </div>
+        <div class="form-row">
+          <label>打ち始めた時間</label>
+          <input type="time" id="q-starttime" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:10px 12px;outline:none;-webkit-appearance:none;appearance:none;">
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:4px">
+        <label>今月の残り予算（円）</label>
+        <input type="number" id="q-monthly" placeholder="例: 20000" min="0" inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">「もう1000円」カウンター</div>
+      <button class="quit-counter-btn" id="q-counter-btn" onclick="incrementCounter()">
+        <button class="quit-counter-reset" onclick="event.stopPropagation(); resetCounter()">リセット</button>
+        <div class="quit-counter-num" id="q-counter-num">0</div>
+        <div class="quit-counter-label">回タップで+1（「もう1000円」と思った回数）</div>
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">心当たりチェック（5問）</div>
+      <div id="q-yn-list">
+        <div class="quit-yn-item">
+          <div class="quit-yn-q">「次で当たる気がする」と思っている</div>
+          <div class="quit-yn-btns">
+            <button class="quit-yn-btn yes" data-q="0" data-v="yes" onclick="selectYN(0,'yes')">YES</button>
+            <button class="quit-yn-btn no" data-q="0" data-v="no" onclick="selectYN(0,'no')">NO</button>
+          </div>
+        </div>
+        <div class="quit-yn-item">
+          <div class="quit-yn-q">負けを取り戻せると思っている</div>
+          <div class="quit-yn-btns">
+            <button class="quit-yn-btn yes" data-q="1" data-v="yes" onclick="selectYN(1,'yes')">YES</button>
+            <button class="quit-yn-btn no" data-q="1" data-v="no" onclick="selectYN(1,'no')">NO</button>
+          </div>
+        </div>
+        <div class="quit-yn-item">
+          <div class="quit-yn-q">今日ここに来る予定じゃなかった</div>
+          <div class="quit-yn-btns">
+            <button class="quit-yn-btn yes" data-q="2" data-v="yes" onclick="selectYN(2,'yes')">YES</button>
+            <button class="quit-yn-btn no" data-q="2" data-v="no" onclick="selectYN(2,'no')">NO</button>
+          </div>
+        </div>
+        <div class="quit-yn-item">
+          <div class="quit-yn-q">財布の残金が心配になってきた</div>
+          <div class="quit-yn-btns">
+            <button class="quit-yn-btn yes" data-q="3" data-v="yes" onclick="selectYN(3,'yes')">YES</button>
+            <button class="quit-yn-btn no" data-q="3" data-v="no" onclick="selectYN(3,'no')">NO</button>
+          </div>
+        </div>
+        <div class="quit-yn-item">
+          <div class="quit-yn-q">「もう少しだけ」と思って気づいたら長時間経っていた</div>
+          <div class="quit-yn-btns">
+            <button class="quit-yn-btn yes" data-q="4" data-v="yes" onclick="selectYN(4,'yes')">YES</button>
+            <button class="quit-yn-btn no" data-q="4" data-v="no" onclick="selectYN(4,'no')">NO</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn" onclick="calcQuit()" style="margin-bottom:12px">判定する</button>
+
+    <div id="q-result" style="display:none"></div>
+  </div>
+
   <!-- タブ3: 確率シミュレーター -->
   <div class="tab-pane" id="tab-sim">
     <div class="card">
@@ -348,6 +508,14 @@
       <line x1="2" y1="17" x2="7" y2="17"/>
     </svg>
     <span class="nav-label">シミュレーター</span>
+  </button>
+  <button class="nav-btn" id="nav-quit" onclick="switchTab('quit')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="15" y1="9" x2="9" y2="15"/>
+      <line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+    <span class="nav-label">やめ時</span>
   </button>
 </nav>
 
@@ -744,6 +912,187 @@ function drawSimCanvas(denom, curGames) {
   ctx.fillStyle = '#f0b429';
   ctx.font = `bold ${10*dpr}px sans-serif`;
   ctx.fillText(fmt(pCur*100) + '%', xCur + 6*dpr, yCur - 4*dpr);
+}
+
+// ============================================================
+// タブ4: やめ時判定
+// ============================================================
+let qCounter = 0;
+let qYN = [null, null, null, null, null]; // null / 'yes' / 'no'
+
+function incrementCounter() {
+  qCounter++;
+  document.getElementById('q-counter-num').textContent = qCounter;
+}
+function resetCounter() {
+  qCounter = 0;
+  document.getElementById('q-counter-num').textContent = '0';
+}
+function selectYN(idx, val) {
+  qYN[idx] = val;
+  // ボタンのスタイル更新
+  const yesBtn = document.querySelector(`.quit-yn-btn.yes[data-q="${idx}"]`);
+  const noBtn  = document.querySelector(`.quit-yn-btn.no[data-q="${idx}"]`);
+  yesBtn.classList.toggle('selected', val === 'yes');
+  noBtn.classList.toggle('selected', val === 'no');
+}
+
+const QUIT_LINES = {
+  // level 0: 余裕 - ペカ子
+  0: [
+    '「サービス、サービス♪」 今日はここでやめておこう！勝ち逃げが一番の設定6だよ。',
+    '俺の辞め時は自分で決める！今がその時だぜ！収支もいい感じ、颯爽と帰ろう。',
+    '今日のお前には輝きがある。その輝きを持ったまま帰れ。それがホンモノの強さぞ。',
+    '私と契約して、勝ち逃げする人になってよ！今日はあなたの勝ちだよ！',
+    '傾(かぶ)くなら勝って傾け。今がその時ぞ。この勝ちを胸に帰れ！',
+  ],
+  // level 1: 注意 - ペカ子→爺さん
+  1: [
+    '逃げちゃダメだ、逃げちゃダメだ…って逆！今すぐ逃げろ！状況が怪しくなってきたよ。',
+    'お前の収支に、陰りが見えてきたぞ。このまま続けると取り返しがつかなくなる前に立ち止まれ。',
+    '私と契約して、立ち止まれる人になってよ。ここが分岐点だよ。',
+    '銭形さんに追われる前に撤退するのがルパンの美学だぜ。そろそろ撤退の時だ。',
+    '弾が切れる前にマガジンを確認しろ。財布もな。今のうちに確認して帰れ。',
+  ],
+  // level 2: 危険 - ゴーゴー爺さん
+  2: [
+    'お前の予算はもう死んでいる。聞こえているか！？今すぐ台を立て！！',
+    'バカ！もっとバカ！最低！なんで今すぐ帰れないの！このままじゃ本当にヤバいぞ！',
+    '私と契約して、ATMに行かない人になってよ！ATMへの道は地獄への道だ！',
+    '傾きすぎた。これは傾奇者ではなく、ただの無謀者ぞ！今すぐ退散せよ！',
+    'ロックならまだ止まれる。お前はまだロックか？なら今すぐ台を離れろ！',
+  ],
+  // level 3: アウト - 確率くん
+  3: [
+    'お前はもう、今月の予算を使い果たしている。データは嘘をつかない。帰れ。',
+    '使徒じゃなくて、お前の財布が殲滅されました。補完する前に帰宅してください。',
+    '私と契約して、魔法少女になってよ。でないとその負けは数学的に取り戻せない。1/確率の期待値を計算しろ。',
+    '今回ばかりは、不二子ちゃんにも騙せない現実がある。収支はマイナス確定だ。退場しろ。',
+    '1000の言い訳より、1つの帰宅を。今すぐ帰れ。それが唯一の最適解だ。',
+  ],
+};
+
+const QUIT_CHARS = [
+  { icon: '😊', name: 'ペカ子', label: '余裕あり' },
+  { icon: '😅', name: 'ペカ子（心配）', label: '注意段階' },
+  { icon: '😤', name: 'ゴーゴー爺さん', label: '危険域！' },
+  { icon: '🤖', name: '確率くん', label: 'アウト！！' },
+];
+
+function calcQuit() {
+  const budget   = parseInt(document.getElementById('q-budget').value)   || 0;
+  const invest   = parseInt(document.getElementById('q-invest').value)   || 0;
+  const recover  = parseInt(document.getElementById('q-recover').value)  || 0;
+  const monthly  = parseInt(document.getElementById('q-monthly').value)  || 0;
+  const startVal = document.getElementById('q-starttime').value;
+
+  // スコア計算
+  let score = 0;
+
+  // 収支
+  const balance = recover - invest;
+  if (balance < 0) {
+    const lossRatio = Math.abs(balance) / Math.max(budget, 1);
+    score += Math.min(lossRatio * 30, 30); // 最大30点
+  } else {
+    score -= 5; // プラス収支はスコアを下げる
+  }
+
+  // 予算オーバー
+  if (budget > 0 && invest > budget) {
+    score += 20;
+  }
+
+  // 今月残り予算
+  if (monthly > 0) {
+    if (monthly < 5000)  score += 25;
+    else if (monthly < 10000) score += 15;
+    else if (monthly < 20000) score += 5;
+  }
+
+  // 「もう1000円」カウンター
+  if (qCounter >= 10) score += 30;
+  else if (qCounter >= 5) score += 20;
+  else if (qCounter >= 3) score += 10;
+  else if (qCounter >= 1) score += 5;
+
+  // YES回答
+  const yesCount = qYN.filter(v => v === 'yes').length;
+  score += yesCount * 8;
+
+  // 打ち始めた時間（長時間は加点）
+  if (startVal) {
+    const [sh, sm] = startVal.split(':').map(Number);
+    const now = new Date();
+    const startMinutes = sh * 60 + sm;
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    let diffMin = nowMinutes - startMinutes;
+    if (diffMin < 0) diffMin += 1440;
+    if (diffMin > 480) score += 20;       // 8時間超
+    else if (diffMin > 300) score += 10;  // 5時間超
+    else if (diffMin > 180) score += 5;   // 3時間超
+  }
+
+  // レベル決定
+  let level;
+  if (score <= 10)      level = 0;
+  else if (score <= 25) level = 1;
+  else if (score <= 45) level = 2;
+  else                  level = 3;
+
+  // ランダムセリフ
+  const lines = QUIT_LINES[level];
+  const line = lines[Math.floor(Math.random() * lines.length)];
+  const ch = QUIT_CHARS[level];
+
+  // 収支表示
+  const balSign = balance >= 0 ? '+' : '';
+  const balColor = balance >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // 経過時間
+  let timeStr = '--';
+  if (startVal) {
+    const [sh, sm] = startVal.split(':').map(Number);
+    const now = new Date();
+    const startMinutes = sh * 60 + sm;
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    let diffMin = nowMinutes - startMinutes;
+    if (diffMin < 0) diffMin += 1440;
+    timeStr = `${Math.floor(diffMin/60)}時間${diffMin%60}分`;
+  }
+
+  const levelNames = ['余裕あり', '注意', '危険', 'アウト'];
+
+  const html = `
+    <div class="quit-result-card level-${level}">
+      <div class="quit-char-icon">${ch.icon}</div>
+      <div class="quit-char-name">${ch.name}</div>
+      <div class="quit-level-badge">${levelNames[level]}</div>
+      <div class="quit-summary-grid">
+        <div class="quit-summary-item">
+          <div class="qs-label">収支</div>
+          <div class="qs-value" style="color:${balColor}">${balSign}${balance.toLocaleString()}円</div>
+        </div>
+        <div class="quit-summary-item">
+          <div class="qs-label">もう1000円</div>
+          <div class="qs-value" style="color:var(--gold)">${qCounter}回</div>
+        </div>
+        <div class="quit-summary-item">
+          <div class="qs-label">プレイ時間</div>
+          <div class="qs-value" style="color:var(--text2);font-size:12px">${timeStr}</div>
+        </div>
+      </div>
+      <div class="quit-speech-bubble">${line}</div>
+    </div>
+    <div class="card" style="font-size:12px;color:var(--text2);text-align:center;padding:10px">
+      判定スコア: ${Math.round(score)}点 ／ YES回答: ${yesCount}/5問
+    </div>
+  `;
+
+  const resultEl = document.getElementById('q-result');
+  resultEl.innerHTML = html;
+  resultEl.style.display = 'block';
+  resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ============================================================
