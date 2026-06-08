@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ペカ太郎">
+<title>ペカ太郎 - スロット分析</title>
+<link rel="manifest" id="manifest-placeholder">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #111111;
+    --bg2: #1e1e1e;
+    --bg3: #2a2a2a;
+    --border: #333;
+    --gold: #f0b429;
+    --orange: #e07b2a;
+    --text: #e8e8e8;
+    --text2: #999;
+    --green: #4caf50;
+    --red: #f44336;
+    --blue: #42a5f5;
+    --tab-h: 64px;
+    --header-h: 52px;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Helvetica Neue', Arial, sans-serif; }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Header */
+  #header {
+    height: var(--header-h);
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2000 100%);
+    border-bottom: 1px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  #header h1 { font-size: 20px; font-weight: 700; letter-spacing: 2px; color: var(--gold); text-shadow: 0 0 12px rgba(240,180,41,0.4); }
+  #header h1 span { color: var(--orange); }
+
+  /* Content */
+  #content {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    padding: 12px 12px calc(var(--tab-h) + 12px);
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* Bottom nav */
+  #bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: var(--tab-h);
+    background: #1a1a1a;
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 100;
+  }
+  .nav-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; background: none; border: none; cursor: pointer; color: var(--text2);
+    font-size: 10px; transition: color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-btn.active { color: var(--gold); }
+  .nav-btn svg { width: 22px; height: 22px; }
+  .nav-btn .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
+
+  /* Cards */
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px; margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--gold); margin-bottom: 12px;
+  }
+
+  /* Form elements */
+  label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; font-weight: 600; }
+  select, input[type="number"], input[type="range"] {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 15px; padding: 10px 12px;
+    outline: none; appearance: none; -webkit-appearance: none;
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  select:focus, input[type="number"]:focus { border-color: var(--gold); }
+  input[type="range"] { padding: 6px 0; accent-color: var(--gold); }
+  .form-row { margin-bottom: 12px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  /* Buttons */
+  .btn {
+    width: 100%; padding: 13px; border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    background: linear-gradient(135deg, var(--gold), var(--orange));
+    color: #111; letter-spacing: 1px; transition: opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { opacity: 0.8; }
+
+  /* Setting bars */
+  .setting-bars { display: flex; flex-direction: column; gap: 7px; }
+  .setting-row {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .setting-label { width: 38px; font-size: 13px; font-weight: 700; color: var(--text2); flex-shrink: 0; }
+  .setting-bar-wrap { flex: 1; background: var(--bg3); border-radius: 4px; height: 22px; overflow: hidden; position: relative; }
+  .setting-bar {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, #333, #555);
+    transition: width 0.5s ease;
+    display: flex; align-items: center; justify-content: flex-end; padding-right: 6px;
+  }
+  .setting-bar.best { background: linear-gradient(90deg, #7b5800, var(--gold)); }
+  .setting-bar-text { font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; }
+  .setting-pct { width: 44px; text-align: right; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .setting-pct.best { color: var(--gold); }
+  .best-badge {
+    background: var(--gold); color: #111; font-size: 10px; font-weight: 700;
+    padding: 1px 6px; border-radius: 10px; margin-left: 4px;
+  }
+
+  /* Result cards */
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .result-item { background: var(--bg3); border-radius: 8px; padding: 10px; text-align: center; }
+  .result-item .r-label { font-size: 10px; color: var(--text2); margin-bottom: 4px; }
+  .result-item .r-value { font-size: 18px; font-weight: 700; color: var(--gold); }
+  .result-item .r-sub { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+  /* EV results */
+  .ev-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .ev-row:last-child { border-bottom: none; }
+  .ev-key { font-size: 13px; color: var(--text2); }
+  .ev-val { font-size: 15px; font-weight: 700; }
+  .ev-val.pos { color: var(--green); }
+  .ev-val.neg { color: var(--red); }
+  .ev-val.neu { color: var(--text); }
+
+  /* Sim slider */
+  .slider-val { text-align: center; font-size: 28px; font-weight: 700; color: var(--gold); margin: 6px 0; }
+  .prob-display { text-align: center; margin: 10px 0; }
+  .prob-pct { font-size: 48px; font-weight: 700; color: var(--gold); line-height: 1; }
+  .prob-label { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+  /* Canvas */
+  canvas { width: 100%; height: 160px; border-radius: 8px; background: var(--bg3); display: block; }
+
+  /* Info chip */
+  .chip { display: inline-block; background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--text2); margin: 2px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Separator */
+  .sep { height: 1px; background: var(--border); margin: 12px 0; }
+
+  /* Highlight row */
+  .hl-row { background: rgba(240,180,41,0.08); border: 1px solid rgba(240,180,41,0.3); border-radius: 8px; padding: 10px; margin: 8px 0; }
+  .hl-title { font-size: 11px; color: var(--gold); font-weight: 700; margin-bottom: 4px; }
+  .hl-body { font-size: 14px; color: var(--text); }
+
+  .section-sub { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+
+  .tag-set { display: inline-block; background: #2a2000; border: 1px solid var(--gold); color: var(--gold); border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700; margin-right: 4px; }
+
+  .input-hint { font-size: 11px; color: var(--text2); margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>ペカ<span>太郎</span> 🎰</h1>
+</div>
+
+<div id="content">
+  <!-- タブ1: 設定推測 -->
+  <div class="tab-pane active" id="tab-guess">
+    <div class="card">
+      <div class="card-title">機種・データ入力</div>
+      <div class="form-row">
+        <label>機種選択</label>
+        <select id="g-machine" onchange="onMachineChange('g')">
+          <option value="aim">アイムジャグラーEX</option>
+          <option value="my">マイジャグラー5</option>
+          <option value="funky">ファンキージャグラー2</option>
+          <option value="hana">ハナハナホウオウ</option>
+          <option value="hanabi">ハナビ</option>
+        </select>
+      </div>
+      <div class="form-grid3">
+        <div class="form-row">
+          <label>ゲーム数</label>
+          <input type="number" id="g-games" placeholder="例: 500" min="0" inputmode="numeric">
+        </div>
+        <div class="form-row">
+          <label>BIG回数</label>
+          <input type="number" id="g-big" placeholder="例: 3" min="0" inputmode="numeric">
+        </div>
+        <div class="form-row">
+          <label>REG回数</label>
+          <input type="number" id="g-reg" placeholder="例: 2" min="0" inputmode="numeric">
+        </div>
+      </div>
+      <button class="btn" onclick="calcGuess()">設定を推測する</button>
+    </div>
+
+    <div class="card" id="g-result" style="display:none">
+      <div class="card-title">設定確率（ベイズ推定）</div>
+      <div id="g-result-inner"></div>
+    </div>
+
+    <div class="card" id="g-ref" style="display:none">
+      <div class="card-title">機種データ（公表値）</div>
+      <div id="g-ref-inner"></div>
+    </div>
+  </div>
+
+  <!-- タブ2: 期待値計算 -->
+  <div class="tab-pane" id="tab-ev">
+    <div class="card">
+      <div class="card-title">条件入力</div>
+      <div class="form-row">
+        <label>機種選択</label>
+        <select id="e-machine" onchange="onMachineChange('e')">
+          <option value="aim">アイムジャグラーEX</option>
+          <option value="my">マイジャグラー5</option>
+          <option value="funky">ファンキージャグラー2</option>
+          <option value="hana">ハナハナホウオウ</option>
+          <option value="hanabi">ハナビ</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>設定</label>
+        <select id="e-setting">
+          <option value="1">設定1</option>
+          <option value="2">設定2</option>
+          <option value="3">設定3</option>
+          <option value="4">設定4</option>
+          <option value="5">設定5</option>
+          <option value="6">設定6</option>
+        </select>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>現在ゲーム数</label>
+          <input type="number" id="e-games" placeholder="例: 1000" min="0" inputmode="numeric">
+        </div>
+        <div class="form-row">
+          <label>現在収支（円）</label>
+          <input type="number" id="e-balance" placeholder="例: -3000" inputmode="numeric">
+          <div class="input-hint">マイナスは負け</div>
+        </div>
+      </div>
+      <button class="btn" onclick="calcEV()">期待値を計算する</button>
+    </div>
+
+    <div class="card" id="e-result" style="display:none">
+      <div class="card-title">期待値分析</div>
+      <div id="e-result-inner"></div>
+    </div>
+
+    <div class="card" id="e-table" style="display:none">
+      <div class="card-title">全設定 機械割一覧</div>
+      <div id="e-table-inner"></div>
+    </div>
+  </div>
+
+  <!-- タブ3: 確率シミュレーター -->
+  <div class="tab-pane" id="tab-sim">
+    <div class="card">
+      <div class="card-title">BIG確率設定</div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>BIG確率 分母</label>
+          <input type="number" id="s-denom" value="240" min="100" max="600" inputmode="numeric" oninput="updateSim()">
+          <div class="input-hint">1/〇〇 の〇〇</div>
+        </div>
+        <div class="form-row">
+          <label>現在のハマり</label>
+          <input type="number" id="s-hama" value="0" min="0" inputmode="numeric" oninput="updateSim()">
+          <div class="input-hint">BIG未当選ゲーム数</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ゲーム数シミュレーション</div>
+      <label>次のBIGまでのゲーム数</label>
+      <input type="range" id="s-games" min="1" max="1000" value="200" oninput="updateSim()">
+      <div class="slider-val" id="s-games-val">200ゲーム</div>
+      <div class="prob-display">
+        <div class="prob-pct" id="s-prob-pct">--.--%</div>
+        <div class="prob-label">あと<span id="s-games-label">200</span>ゲーム以内にBIGを引ける確率</div>
+      </div>
+      <div class="sep"></div>
+      <div id="s-hama-result"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">確率カーブ</div>
+      <canvas id="sim-canvas" height="160"></canvas>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;">
+        <span style="font-size:10px;color:var(--text2)">0G</span>
+        <span style="font-size:10px;color:var(--text2)">500G</span>
+        <span style="font-size:10px;color:var(--text2)">1000G</span>
+      </div>
+      <div style="margin-top:8px;text-align:center;">
+        <span class="chip">緑線: 50%ライン</span>
+        <span class="chip">金線: 現在位置</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">よく使う確率クイック参照</div>
+      <div id="quick-ref"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav id="bottom-nav">
+  <button class="nav-btn active" id="nav-guess" onclick="switchTab('guess')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <span class="nav-label">設定推測</span>
+  </button>
+  <button class="nav-btn" id="nav-ev" onclick="switchTab('ev')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    </svg>
+    <span class="nav-label">期待値</span>
+  </button>
+  <button class="nav-btn" id="nav-sim" onclick="switchTab('sim')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+      <line x1="7" y1="2" x2="7" y2="22"/>
+      <line x1="17" y1="2" x2="17" y2="22"/>
+      <line x1="2" y1="12" x2="22" y2="12"/>
+      <line x1="2" y1="7" x2="7" y2="7"/>
+      <line x1="17" y1="7" x2="22" y2="7"/>
+      <line x1="17" y1="17" x2="22" y2="17"/>
+      <line x1="2" y1="17" x2="7" y2="17"/>
+    </svg>
+    <span class="nav-label">シミュレーター</span>
+  </button>
+</nav>
+
+<script>
+// ============================================================
+// 機種データ（公表値）
+// ============================================================
+const MACHINES = {
+  aim: {
+    name: 'アイムジャグラーEX',
+    rtp: [97.8, 98.9, 99.9, 100.9, 102.9, 104.9], // 設定1〜6
+    big: [1/287.4, 1/282.5, 1/282.5, 1/273.1, 1/264.3, 1/240.9],
+    reg: [1/442.0, 1/371.4, 1/331.0, 1/310.8, 1/264.3, 1/240.9],
+  },
+  my: {
+    name: 'マイジャグラー5',
+    rtp: [96.8, 98.3, 99.9, 101.3, 103.3, 106.2],
+    big: [1/287.4, 1/282.5, 1/273.1, 1/264.3, 1/252.2, 1/240.9],
+    reg: [1/431.1, 1/364.1, 1/315.1, 1/294.1, 1/252.2, 1/218.4],
+  },
+  funky: {
+    name: 'ファンキージャグラー2',
+    rtp: [97.6, 99.7, 100.4, 101.0, 103.2, 106.3],
+    big: [1/287.4, 1/264.3, 1/264.3, 1/264.3, 1/252.2, 1/240.9],
+    reg: [1/442.0, 1/364.1, 1/341.3, 1/315.1, 1/273.1, 1/240.9],
+  },
+  hana: {
+    name: 'ハナハナホウオウ',
+    rtp: [97.2, 98.4, 100.3, 101.2, 103.4, 106.9],
+    big: [1/300.0, 1/277.0, 1/264.0, 1/250.0, 1/240.0, 1/218.0],
+    reg: [1/450.0, 1/390.0, 1/340.0, 1/300.0, 1/260.0, 1/218.0],
+  },
+  hanabi: {
+    name: 'ハナビ',
+    rtp: [97.5, 99.0, 100.0, 101.5, 103.5, 106.5],
+    big: [1/310.0, 1/290.0, 1/268.0, 1/252.0, 1/242.0, 1/220.0],
+    reg: [1/455.0, 1/400.0, 1/350.0, 1/315.0, 1/270.0, 1/230.0],
+  },
+};
+
+// ============================================================
+// ユーティリティ
+// ============================================================
+function fmt(n, digits=1) { return n.toFixed(digits); }
+function fmtComma(n) { return Math.round(n).toLocaleString('ja-JP'); }
+function fmtProb(p) { return (1/p) > 0 ? `1/${Math.round(1/p)}` : '--'; }
+
+// ============================================================
+// タブ切替
+// ============================================================
+let currentTab = 'guess';
+function switchTab(tab) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+  currentTab = tab;
+  if (tab === 'sim') { updateSim(); }
+  savePrefs();
+}
+
+// ============================================================
+// localStorageで最後の設定を保存
+// ============================================================
+function savePrefs() {
+  const prefs = {
+    tab: currentTab,
+    gMachine: document.getElementById('g-machine').value,
+    eMachine: document.getElementById('e-machine').value,
+    eSetting: document.getElementById('e-setting').value,
+  };
+  localStorage.setItem('pekataro_prefs', JSON.stringify(prefs));
+}
+function loadPrefs() {
+  try {
+    const p = JSON.parse(localStorage.getItem('pekataro_prefs') || '{}');
+    if (p.gMachine) document.getElementById('g-machine').value = p.gMachine;
+    if (p.eMachine) document.getElementById('e-machine').value = p.eMachine;
+    if (p.eSetting) document.getElementById('e-setting').value = p.eSetting;
+    if (p.tab) switchTab(p.tab);
+  } catch(e) {}
+}
+function onMachineChange(prefix) { savePrefs(); }
+
+// ============================================================
+// タブ1: 設定推測（ベイズ推定）
+// ============================================================
+function calcGuess() {
+  const mKey = document.getElementById('g-machine').value;
+  const games = parseInt(document.getElementById('g-games').value) || 0;
+  const big   = parseInt(document.getElementById('g-big').value) || 0;
+  const reg   = parseInt(document.getElementById('g-reg').value) || 0;
+  const m = MACHINES[mKey];
+
+  if (games < 1) { alert('ゲーム数を入力してください'); return; }
+
+  // ベイズ推定: P(設定s | データ) ∝ P(データ | 設定s) × P(設定s)
+  // 事前分布: 均等 (1/6)
+  // 尤度: 二項分布(BIG) × 二項分布(REG)
+  // ハズレ数 = games - big - reg
+  const N = 6;
+  let likes = [];
+  for (let s = 0; s < N; s++) {
+    const pb = m.big[s];
+    const pr = m.reg[s];
+    // log尤度（オーバーフロー対策）
+    const logL = big * Math.log(pb) + reg * Math.log(pr) + (games - big - reg) * Math.log(Math.max(1e-10, 1 - pb - pr));
+    likes.push(logL);
+  }
+  // softmax
+  const maxL = Math.max(...likes);
+  const exps = likes.map(l => Math.exp(l - maxL));
+  const sumE = exps.reduce((a, b) => a + b, 0);
+  const posts = exps.map(e => e / sumE);
+  const bestIdx = posts.indexOf(Math.max(...posts));
+
+  // 表示
+  const inner = document.getElementById('g-result-inner');
+  let html = '<div class="setting-bars">';
+  for (let s = 0; s < N; s++) {
+    const pct = posts[s] * 100;
+    const isBest = s === bestIdx;
+    const barPct = Math.max(pct, 2);
+    html += `<div class="setting-row">
+      <div class="setting-label">設定${s+1}</div>
+      <div class="setting-bar-wrap">
+        <div class="setting-bar${isBest ? ' best' : ''}" style="width:${barPct}%">
+          <span class="setting-bar-text">${fmt(pct)}%</span>
+        </div>
+      </div>
+      <div class="setting-pct${isBest ? ' best' : ''}">${fmt(pct)}%${isBest ? '' : ''}</div>
+      ${isBest ? '<span class="best-badge">最有力</span>' : ''}
+    </div>`;
+  }
+  html += '</div>';
+  html += `<div class="hl-row" style="margin-top:12px">
+    <div class="hl-title">推測結果</div>
+    <div class="hl-body">最も可能性が高い設定は <span style="color:var(--gold);font-weight:700;font-size:18px">設定${bestIdx+1}</span>（確率 ${fmt(posts[bestIdx]*100)}%）</div>
+  </div>`;
+
+  // BIG/REG合算確率表示
+  const totalBonus = big + reg;
+  const totalProb = totalBonus > 0 ? `1/${Math.round(games/totalBonus)}` : '--';
+  html += `<div style="margin-top:8px">
+    <span class="chip">合算ボーナス: ${fmtProb((big+reg)/games)}</span>
+    <span class="chip">BIG: ${big>0?fmtProb(big/games):'--'}</span>
+    <span class="chip">REG: ${reg>0?fmtProb(reg/games):'--'}</span>
+  </div>`;
+  inner.innerHTML = html;
+  document.getElementById('g-result').style.display = 'block';
+
+  // 機種データ表示
+  const refInner = document.getElementById('g-ref-inner');
+  let refHtml = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="color:var(--text2)">
+      <th style="padding:6px 4px;text-align:left">設定</th>
+      <th style="padding:6px 4px;text-align:center">BIG確率</th>
+      <th style="padding:6px 4px;text-align:center">REG確率</th>
+      <th style="padding:6px 4px;text-align:center">機械割</th>
+    </tr>`;
+  for (let s = 0; s < N; s++) {
+    const isBest = s === bestIdx;
+    refHtml += `<tr style="${isBest ? 'background:rgba(240,180,41,0.1)' : ''}">
+      <td style="padding:5px 4px;font-weight:700;color:${isBest?'var(--gold)':'var(--text)'}">${s+1}</td>
+      <td style="padding:5px 4px;text-align:center">1/${Math.round(1/m.big[s])}</td>
+      <td style="padding:5px 4px;text-align:center">1/${Math.round(1/m.reg[s])}</td>
+      <td style="padding:5px 4px;text-align:center">${m.rtp[s]}%</td>
+    </tr>`;
+  }
+  refHtml += '</table></div>';
+  refInner.innerHTML = refHtml;
+  document.getElementById('g-ref').style.display = 'block';
+  savePrefs();
+}
+
+// ============================================================
+// タブ2: 期待値計算
+// ============================================================
+// Aタイプの機械割計算
+// BIG: 312枚払い出し相当、REG: 104枚払い出し相当（3枚掛け前提）
+// 純増 = (BIG払い出し × BIG確率 + REG払い出し × REG確率) - 3枚投入 × 1G
+// 機械割 = (期待払い出し) / (3枚 × ゲーム数)
+// ※ 機械割は公表値をそのまま使用
+
+const MEDAL_PRICE = 20; // 1枚20円
+
+function calcEV() {
+  const mKey = document.getElementById('e-machine').value;
+  const sIdx = parseInt(document.getElementById('e-setting').value) - 1;
+  const games = parseInt(document.getElementById('e-games').value) || 0;
+  const balance = parseInt(document.getElementById('e-balance').value) || 0;
+  const m = MACHINES[mKey];
+
+  if (games < 1) { alert('ゲーム数を入力してください'); return; }
+
+  const rtp = m.rtp[sIdx] / 100;
+  // 3枚掛けで1Gあたりの期待収支（メダル枚数）
+  // invest = 3枚/G, return = 3 × rtp 枚/G
+  // 収支メダル/G = 3×rtp - 3 = 3×(rtp-1)
+  const netMedalPerGame = 3 * (rtp - 1);
+  const netYenPerGame = netMedalPerGame * MEDAL_PRICE;
+
+  // 今後1000G・3000G後の期待収支
+  const ev1000 = Math.round(netYenPerGame * 1000);
+  const ev3000 = Math.round(netYenPerGame * 3000);
+
+  // ボーダーゲーム数: balance + netYenPerGame × border = 0
+  // border = -balance / netYenPerGame
+  let borderMsg = '';
+  if (balance < 0 && netYenPerGame > 0) {
+    const border = Math.ceil(-balance / netYenPerGame);
+    borderMsg = `現在の負け（${fmtComma(Math.abs(balance))}円）を取り戻すには、約<strong style="color:var(--gold)">${fmtComma(border)}ゲーム</strong>の続行が必要です（期待値ベース）。`;
+  } else if (netYenPerGame <= 0) {
+    borderMsg = `設定${sIdx+1}は機械割${m.rtp[sIdx]}%のため、長期的には期待値がマイナスです。`;
+  } else {
+    borderMsg = `現在プラス収支です。設定${sIdx+1}（機械割${m.rtp[sIdx]}%）は有利な状況です。`;
+  }
+
+  // 現在の期待収支（ここまで）
+  const expectedSoFar = Math.round(netYenPerGame * games);
+
+  const inner = document.getElementById('e-result-inner');
+  const balSign = balance >= 0 ? '+' : '';
+  const evClass = (v) => v > 0 ? 'pos' : v < 0 ? 'neg' : 'neu';
+
+  inner.innerHTML = `
+    <div class="ev-row"><span class="ev-key">機種</span><span class="ev-val neu">${m.name}</span></div>
+    <div class="ev-row"><span class="ev-key">設定</span><span class="ev-val" style="color:var(--gold)">設定${sIdx+1}</span></div>
+    <div class="ev-row"><span class="ev-key">機械割</span><span class="ev-val neu">${m.rtp[sIdx]}%</span></div>
+    <div class="ev-row"><span class="ev-key">1Gあたり期待収支</span><span class="ev-val ${evClass(netYenPerGame)}">${fmt(netYenPerGame,2)}円</span></div>
+    <div class="sep"></div>
+    <div class="ev-row"><span class="ev-key">現在収支</span><span class="ev-val ${evClass(balance)}">${balSign}${fmtComma(balance)}円</span></div>
+    <div class="ev-row"><span class="ev-key">現在の期待値（${fmtComma(games)}G分）</span><span class="ev-val ${evClass(expectedSoFar)}">${expectedSoFar>=0?'+':''}${fmtComma(expectedSoFar)}円</span></div>
+    <div class="ev-row"><span class="ev-key">ここから1,000G後の期待収支</span><span class="ev-val ${evClass(ev1000)}">${ev1000>=0?'+':''}${fmtComma(ev1000)}円</span></div>
+    <div class="ev-row"><span class="ev-key">ここから3,000G後の期待収支</span><span class="ev-val ${evClass(ev3000)}">${ev3000>=0?'+':''}${fmtComma(ev3000)}円</span></div>
+    <div class="hl-row" style="margin-top:10px">
+      <div class="hl-title">アドバイス</div>
+      <div class="hl-body" style="font-size:13px">${borderMsg}</div>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text2)">※1メダル20円換算 / 3枚掛け想定 / 期待値は長期平均</div>
+  `;
+  document.getElementById('e-result').style.display = 'block';
+
+  // 全設定表
+  const tableInner = document.getElementById('e-table-inner');
+  let tHtml = `<table style="width:100%;border-collapse:collapse;font-size:13px">
+    <tr style="color:var(--text2)">
+      <th style="padding:6px 4px;text-align:left">設定</th>
+      <th style="padding:6px 4px;text-align:right">機械割</th>
+      <th style="padding:6px 4px;text-align:right">1G収支</th>
+      <th style="padding:6px 4px;text-align:right">1000G後</th>
+    </tr>`;
+  for (let s = 0; s < 6; s++) {
+    const r = m.rtp[s] / 100;
+    const ng = 3 * (r - 1) * MEDAL_PRICE;
+    const ev1k = Math.round(ng * 1000);
+    const isCur = s === sIdx;
+    tHtml += `<tr style="${isCur ? 'background:rgba(240,180,41,0.1)' : ''}">
+      <td style="padding:5px 4px;font-weight:700;color:${isCur?'var(--gold)':'var(--text)'}">${s+1}${isCur?' ←':''}</td>
+      <td style="padding:5px 4px;text-align:right">${m.rtp[s]}%</td>
+      <td style="padding:5px 4px;text-align:right;color:${ng>=0?'var(--green)':'var(--red)'}">${fmt(ng,2)}円</td>
+      <td style="padding:5px 4px;text-align:right;color:${ev1k>=0?'var(--green)':'var(--red)'}">${ev1k>=0?'+':''}${fmtComma(ev1k)}円</td>
+    </tr>`;
+  }
+  tHtml += '</table>';
+  tableInner.innerHTML = tHtml;
+  document.getElementById('e-table').style.display = 'block';
+  savePrefs();
+}
+
+// ============================================================
+// タブ3: 確率シミュレーター
+// ============================================================
+// P(BIG within n games) = 1 - (1 - 1/denom)^n
+function probWithinN(n, denom) {
+  return 1 - Math.pow(1 - 1/denom, n);
+}
+
+function updateSim() {
+  const denom = parseInt(document.getElementById('s-denom').value) || 240;
+  const hama  = parseInt(document.getElementById('s-hama').value) || 0;
+  const games = parseInt(document.getElementById('s-games').value) || 200;
+
+  document.getElementById('s-games-val').textContent = games + 'ゲーム';
+  document.getElementById('s-games-label').textContent = games;
+
+  const prob = probWithinN(games, denom);
+  document.getElementById('s-prob-pct').textContent = fmt(prob * 100) + '%';
+
+  // ハマり考慮
+  let hamaHtml = '';
+  if (hama > 0) {
+    const prob100 = probWithinN(100, denom);
+    const probNext = probWithinN(100, denom); // 独立事象
+    // 現在のハマり確率（denom^hamaゲーム当たらない確率）
+    const hamaProb = Math.pow(1 - 1/denom, hama) * 100;
+    hamaHtml = `
+      <div class="ev-row"><span class="ev-key">現在${fmtComma(hama)}Gハマりの発生確率</span><span class="ev-val" style="color:var(--orange)">${fmt(hamaProb)}%</span></div>
+      <div class="ev-row"><span class="ev-key">次の100G以内にBIGを引ける確率</span><span class="ev-val" style="color:var(--gold)">${fmt(prob100*100)}%</span></div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px">※スロットの確率は独立事象のため、ハマり後も確率は変わりません</div>
+    `;
+  } else {
+    hamaHtml = '<div style="color:var(--text2);font-size:12px">ハマりゲーム数を入力すると追加情報が表示されます</div>';
+  }
+  document.getElementById('s-hama-result').innerHTML = hamaHtml;
+
+  // クイック参照
+  const refs = [50, 100, 200, 300, 500, 700, 1000];
+  let qHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  for (const g of refs) {
+    const p = probWithinN(g, denom);
+    qHtml += `<div class="result-item">
+      <div class="r-label">${g}G以内</div>
+      <div class="r-value">${fmt(p*100)}%</div>
+    </div>`;
+  }
+  qHtml += '</div>';
+  document.getElementById('quick-ref').innerHTML = qHtml;
+
+  // Canvas描画
+  drawSimCanvas(denom, games);
+}
+
+function drawSimCanvas(denom, curGames) {
+  const canvas = document.getElementById('sim-canvas');
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  const W = canvas.width = rect.width * window.devicePixelRatio;
+  const H = canvas.height = 160 * window.devicePixelRatio;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const padL = 8 * dpr, padR = 8 * dpr, padT = 12 * dpr, padB = 24 * dpr;
+  const maxG = 1000;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  // 背景
+  ctx.fillStyle = '#1e1e1e';
+  ctx.fillRect(0, 0, W, H);
+
+  // グリッド線
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1;
+  for (let pct of [25, 50, 75, 100]) {
+    const y = padT + plotH * (1 - pct/100);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
+    ctx.fillStyle = '#555';
+    ctx.font = `${9*dpr}px sans-serif`;
+    ctx.fillText(pct + '%', padL + 2, y - 2);
+  }
+
+  // 確率カーブ
+  ctx.beginPath();
+  ctx.strokeStyle = '#f0b429';
+  ctx.lineWidth = 2 * dpr;
+  let first = true;
+  for (let g = 0; g <= maxG; g += 2) {
+    const p = probWithinN(g, denom);
+    const x = padL + (g / maxG) * plotW;
+    const y = padT + plotH * (1 - p);
+    if (first) { ctx.moveTo(x, y); first = false; } else { ctx.lineTo(x, y); }
+  }
+  ctx.stroke();
+
+  // 50%ライン
+  ctx.strokeStyle = '#4caf50';
+  ctx.lineWidth = 1.5 * dpr;
+  ctx.setLineDash([4*dpr, 4*dpr]);
+  const y50 = padT + plotH * 0.5;
+  ctx.beginPath(); ctx.moveTo(padL, y50); ctx.lineTo(padL + plotW, y50); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 現在位置
+  const xCur = padL + (Math.min(curGames, maxG) / maxG) * plotW;
+  const pCur = probWithinN(curGames, denom);
+  const yCur = padT + plotH * (1 - pCur);
+
+  ctx.strokeStyle = '#f0b429';
+  ctx.lineWidth = 1.5 * dpr;
+  ctx.setLineDash([3*dpr, 3*dpr]);
+  ctx.beginPath(); ctx.moveTo(xCur, padT); ctx.lineTo(xCur, padT + plotH); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 現在位置の点
+  ctx.fillStyle = '#f0b429';
+  ctx.beginPath();
+  ctx.arc(xCur, yCur, 5 * dpr, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 確率テキスト
+  ctx.fillStyle = '#f0b429';
+  ctx.font = `bold ${10*dpr}px sans-serif`;
+  ctx.fillText(fmt(pCur*100) + '%', xCur + 6*dpr, yCur - 4*dpr);
+}
+
+// ============================================================
+// PWA: Manifest & Service Worker
+// ============================================================
+const SVG_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1a1a1a"/>
+  <rect x="60" y="140" width="392" height="232" rx="20" fill="#2a2a2a" stroke="#f0b429" stroke-width="8"/>
+  <circle cx="256" cy="256" r="70" fill="none" stroke="#f0b429" stroke-width="10"/>
+  <circle cx="256" cy="256" r="20" fill="#f0b429"/>
+  <line x1="256" y1="186" x2="256" y2="256" stroke="#f0b429" stroke-width="10" stroke-linecap="round"/>
+  <line x1="256" y1="256" x2="306" y2="296" stroke="#f0b429" stroke-width="7" stroke-linecap="round"/>
+  <text x="256" y="420" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="60" fill="#f0b429">SLOT</text>
+</svg>`;
+
+function setupPWA() {
+  const svgB64 = btoa(unescape(encodeURIComponent(SVG_ICON)));
+  const manifest = {
+    name: 'ペカ太郎 - スロット分析',
+    short_name: 'ペカ太郎',
+    start_url: '.',
+    display: 'standalone',
+    background_color: '#111111',
+    theme_color: '#1a1a1a',
+    orientation: 'portrait',
+    icons: [
+      { src: 'data:image/svg+xml;base64,' + svgB64, sizes: '192x192', type: 'image/svg+xml' },
+      { src: 'data:image/svg+xml;base64,' + svgB64, sizes: '512x512', type: 'image/svg+xml' },
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+  const url = URL.createObjectURL(blob);
+  document.getElementById('manifest-placeholder').setAttribute('href', url);
+
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+const CACHE = 'pekataro-v1';
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+});
+`;
+    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  }
+}
+
+// ============================================================
+// 初期化
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  setupPWA();
+  loadPrefs();
+  updateSim();
+});
+</script>
+</body>
+</html>
